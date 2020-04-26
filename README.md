@@ -1,2 +1,2 @@
 # shadowGame
-Video game I created in my high school computer science class
+Video game I created in my high school computer science class. Please note that the files will not run properly as I have not uploaded the assets required to run them (there's too many assets to upload). I just uploaded these files to show off the code behind them. To see what the game looks like, please click on the png files. I have also uploaded a brief video to show off the game further: https://drive.google.com/file/d/1tC2ip75zn32EWNn_hOxt1ZJXnS5hvNsq/view?usp=sharing
