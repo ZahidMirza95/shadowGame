@@ -1,0 +1,107 @@
+<!-- Zahid Mirza, Anthony Valcic, Mayuran Sevaratnam
+      January 24, 2018
+      Summative
+      This webpage is our controls screeen created to be marked as part of our summative project-->
+
+
+<script src="phaser.min.js"></script>
+<script src="phaser.js"></script>
+<script>
+/*CTRL-SHIFT-I activates opera's development tools*/
+/*http://phaser.io/docs*/
+/*http://phaser.io/examples*/
+/*http://gamedolph.in/tutorials/state-management-tiny-tutorial/*/
+/*http://www.emanueleferonato.com/2014/08/28/phaser-tutorial-understanding-phaser-states/*/
+/*http://perplexingtech.weebly.com/game-dev-blog/using-states-in-phaserjs-javascript-game-developement*/
+/*http://downloads.khinsider.com/*/
+/*http://kvazars.com/littera/*/
+/*http://www.paolodistefano.com/2015/03/16/using-littera-with-phaser/*/
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var backgroundMusic;
+
+function preload() {
+//images of computer keys
+game.load.image("buttonD", "keyD.png");
+game.load.image("buttonC", "keyC.png");
+
+game.load.image("buttonSpace", "keySpace.png");
+
+game.load.image("buttonLeft", "keyLeft.png");
+game.load.image("buttonDown", "keyDown.png");
+game.load.image("buttonRight", "keyRight.png");
+game.load.image("buttonUp", "keyUp.png");
+
+//images of the background and title
+game.load.image("ShadowBackground", "ShadowBackground.png");
+game.load.image("ControlsTitle", "ControlsTitle.png");
+
+//image of Back Button
+game.load.image("backButton", "backButton.png");
+
+//loads background music
+game.load.audio('backgroundMusic', 'Shadow Sound Effects/shadowWorldMap.mp3');
+}
+
+//in game variables 
+function create() {
+
+	//creates a variable that adds the background image
+	var background = game.add.image(5, 60, 'ShadowBackground');
+	background.scale.setTo(1.126, 1.126);
+
+	//creates a variable that adds the title image
+	var title = game.add.image(0,0, 'ControlsTitle');
+	title.scale.setTo(1.17, 1.15);
+
+	//creates a variable that adds text
+	var text = game.add.text(game.world.centerX - 80, game.world.centerY - 180, "Click on a button to see it's use in the game.", {font: "14px Arial", fill: "#FFFFFF"});
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonD = game.add.button(200, 350, 'buttonD', function() {
+	text.setText("While playing as Shadow, you can hold down\n this key to dash, making you invincible and\n increasing your speed while decreasing\n your rings.") });
+	buttonD.scale.setTo(0.12, 0.12);
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonSpace = game.add.button(300, 485, 'buttonSpace', function() {
+		text.setText("This is an alternative way to jump!")});
+	buttonSpace.scale.setTo(0.45, 0.45);
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonLeft = game.add.button(540, 500, 'buttonLeft', function() {
+		text.setText("If you hold the left key, your player (Shadow)\n moves to the left.")});
+	buttonLeft.scale.setTo(0.5, 0.5);
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonDown = game.add.button(600, 500, 'buttonDown', function() {
+		text.setText("If you hold the down key, your player\n (Shadow) crouches. If you have speed \n while doing this, you can perform \n a spindash!")});
+	buttonDown.scale.setTo(0.5, 0.5);
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonRight = game.add.button(660, 500, 'buttonRight', function() {
+		text.setText("If you hold the right key, your player\n (Shadow) moves to the right.")});
+	buttonRight.scale.setTo(0.47, 0.47);
+
+	//adds the button image and when clicked, the text in the box changes
+	var buttonUp = game.add.button(600, 467, 'buttonUp', function() {
+		text.setText("If you press the up key, your player (Shadow)\n jumps.")});
+	buttonUp.scale.setTo(0.51, 0.51);
+
+	//adds a back button image, returns you to the Main Menu page
+	var buttonBack = game.add.button(25,15, 'backButton', function() {
+		window.location.href = "mainMenu.html"});
+	buttonBack.scale.setTo(0.1, 0.1);
+
+	//plays background music
+	//Plays Background Music at a certain volume and loops it
+    backgroundMusic = game.add.audio('backgroundMusic');
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = 1.0;
+    backgroundMusic.play();
+}
+
+//game loop
+function update() {
+
+}
+
+</script>

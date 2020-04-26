@@ -1,0 +1,74 @@
+<!-- Zahid Mirza, Anthony Valcic, Mayuran Sevaratnam
+      January 24, 2018
+      Summative
+      This webpage is our game over screen created to be marked as part of our summative project-->
+
+<script src="phaser.min.js"></script>
+<script src="phaser.js"></script>
+<script>
+/*CTRL-SHIFT-I activates opera's development tools*/
+/*http://phaser.io/docs*/
+/*http://phaser.io/examples*/
+/*http://gamedolph.in/tutorials/state-management-tiny-tutorial/*/
+/*http://www.emanueleferonato.com/2014/08/28/phaser-tutorial-understanding-phaser-states/*/
+/*http://perplexingtech.weebly.com/game-dev-blog/using-states-in-phaserjs-javascript-game-developement*/
+/*http://downloads.khinsider.com/*/
+/*http://kvazars.com/littera/*/
+/*http://www.paolodistefano.com/2015/03/16/using-littera-with-phaser/*/
+var game = new Phaser.Game(1200, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var fact;
+//variables for Shadow
+var shadow;
+var shadowsDeath = true;
+function changeFrame()
+{
+	shadowsDeath = false;
+}
+
+function preload() {
+//images used in the webpage
+game.load.image("game Over", "gameOverImage.png");
+game.load.image("spotlight", "spotlight.png");
+game.load.image("playAgain", "playAgainButton.png");
+game.load.image("mainMenu", "mainMenuButton.png");
+game.load.spritesheet('shadowHurt', 'shadassets2/shadowHurtSpritesheet.png', 40, 46);
+}
+
+//in game variables 
+function create() {
+
+//creates a variable that adds the game over image
+var gameOver = game.add.sprite(250, 0, "game Over");
+gameOver.scale.setTo(0.5, 0.5);
+
+//creates a variable that adds a spotlight image to the game
+var spotlight = game.add.sprite(350, 328, "spotlight");
+//This code makes the spotlight fade in and fade out, in 4 seconds
+ spotlight.alpha = 0;
+ game.add.tween(spotlight).to( { alpha: 1 }, 4000, Phaser.Easing.Linear.None, true, 0, 1000, true);
+
+//creates a variable that adds a button with the play again image inside
+var playAgain = game.add.button(80, 400, "playAgain", function() 
+	{window.location.href = "shadow.html"});
+playAgain.scale.setTo(0.5, 0.5);
+
+//creates a variable that adds a button with the main menu image inside
+var mainMenu = game.add.button(750, 400, "mainMenu", function() 
+	{window.location.href = "mainMenu.html"});
+mainMenu.scale.setTo(0.5, 0.5);
+var word = "shadow";
+
+shadow = game.add.sprite(475, 400, 'shadowHurt');
+shadow.scale.setTo(4, 4);
+shadow.animations.add('shadowLosing', [0, 1, 2, 3, 4, 5, 6], 2, false);
+//Makes a timed event so that after a certain amount of time, only the last frame will play
+game.time.events.add(Phaser.Timer.SECOND*3, changeFrame, this);
+}
+
+//game loop
+function update() {
+	if(shadowsDeath == true) shadow.animations.play('shadowLosing'); //Plays the frames until the variable becomes false
+	else shadow.frame = 6;//This is the frame that's left after the animations play
+}
+
+</script>

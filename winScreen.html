@@ -1,0 +1,143 @@
+<!-- Zahid Mirza, Anthony Valcic, Mayuran Sevaratnam
+      January 24, 2018
+      Summative
+      This webpage only shows up when you win the game. It will display your
+      score and will ask if you want to go back to the main menu or continue on 
+      to the next level-->
+
+<script src='phaser.min.js'></script>
+<script src='phaser.js'></script>
+<script>
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+//variable related to scores
+var score = new Array();
+var newScore;
+var chaosScore;
+var ringScore;
+var timerScore;
+var totalScore;
+
+//variable related to score text 
+var chaosScoreText;
+var ringScoreText;
+var timeScoreText;
+var totalScoreText;
+
+//variable related to bubble sorting
+var bubblesort;
+var bubblesortButton;
+var buttonText;
+
+function putNumbersInArray()
+{
+    //Putting scores into score array
+    score[0] = parseInt(chaosScoreText.text);
+    score[1] = parseInt(ringScoreText.text);
+    score[2] = parseInt(timeScoreText.text);
+}
+    
+function preload() {
+  //loading button image
+  game.load.image("button", "blueButton.png");
+
+  //loads audio indicating completion
+  game.load.audio('levelComplete', 'Shadow Sound Effects/levelComplete.mp3');
+}
+
+function _bubblesort()
+{
+  //using the putNumbersInArray function
+	putNumbersInArray();
+
+  //Clearing bubblesort text
+  bubblesortText.text = "";
+
+/****************************
+*********Bubble Sort*********
+****************************/
+
+	for(var z=0;z<score.length;z++)
+	{
+		for(var x = 0; x < score.length; x++)
+		{
+			 var temporary;
+			 if(score[x] < score[x + 1])
+			 {
+			    temporary = score[x];
+			    score[x] = score[x + 1];
+			    score[x + 1] = temporary;
+			 }
+		 }
+	}
+
+    //Putting array into bubblesortText text box
+    for(var x = 0; x < score.length; x++)
+    {
+        bubblesortText.text += score[x] + " ";
+        if(score[x] == score[2])
+        {
+        	break;
+        }       
+    }
+}
+
+function create() {
+    //Getting data from the shadow.html
+    timerScore = localStorage.getItem("timerScore");
+    chaosScore = localStorage.getItem("chaosScore");
+    ringScore = localStorage.getItem("ringScore");
+    totalScore = localStorage.getItem('totalScore');
+
+    //Displaying new score
+    newScore = game.add.text(200, game.world.height - 550, 'You Win!', { fontSize: '99px', fill: '#FFF' });
+
+    //Displaying chaos score
+    chaosScoreText = game.add.text(450, game.world.height - 400, chaosScore + '', { fontSize: '32px', fill: '#FFF' });
+    chaosScoreGuide = game.add.text(100, game.world.height - 400, 'Chaos Emerald Score:', { fontSize: '32px', fill: '#FFF' });
+
+    //Displaying ring score
+    ringScoreText = game.add.text(290, game.world.height - 350, ringScore + '', { fontSize: '32px', fill: '#FFF' });
+    ringsScoreGuide = game.add.text(100, game.world.height - 350, 'Ring Score:', { fontSize: '32px', fill: '#FFF' });
+
+    //Displaying timer score
+    timeScoreText = game.add.text(290, game.world.height - 300, timerScore + '', { fontSize: '32px', fill: '#FFF' });
+    timeScoreGuide = game.add.text(100, game.world.height - 300, 'Time Score:', { fontSize: '32px', fill: '#FFF' });
+
+    //Displaying the total score
+    totalScoreText = game.add.text(290, game.world.height - 250, totalScore + '', { fontSize: '32px', fill: '#FFF' });
+    totalScoreGuide = game.add.text(100, game.world.height - 250, 'Total Score:', { fontSize: '32px', fill: '#FFF' });
+
+    //Displaying bubble sort text
+    bubblesortText = game.add.text(53, game.world.height - 88, '', { fontSize: '32px', fill: '#FFF' });  
+
+    //Setting button image
+    bubblesortButton = game.add.button(0, 400,"button", _bubblesort);
+    bubblesortButton.scale.setTo(0.5, 0.3); 
+
+    //Displays button text
+    buttonText = game.add.text(53, game.world.height - 175, 'Bubble Sort', { fontSize: '32px', fill: '#FFF' });
+
+    //Setting button image
+    mainMenuButton =  game.add.button(250, 500,"button", function(){window.location.href = "mainMenu.html"});
+    mainMenuButton.scale.setTo(0.5, 0.3);
+
+    //Displays button text
+    MenubuttonText = game.add.text(314, game.world.height - 75, 'Main Menu', { fontSize: '32px', fill: '#FFF' }); 
+
+    //Setting playAgain button image
+    playAgainButton =  game.add.button(500, 400,"button", function(){window.location.href = "shadow.html"});
+    playAgainButton.scale.setTo(0.5, 0.3);
+
+    //Displays playbuttonText text
+    PlaybuttonText = game.add.text(570, game.world.height - 175, 'Play Again', { fontSize: '32px', fill: '#FFF' }); 
+    //plays audio when this screen is shown
+    game.sound.play('levelComplete');
+}
+
+function update() {
+
+
+}
+</script>

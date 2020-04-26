@@ -1,0 +1,1179 @@
+<!-- Zahid Mirza, Anthony Valcic, Mayuran Sevaratnam
+      January 24, 2018
+      Summative
+      This webpage is our game (Shadow's Adventures) created to be marked as part of our summative project-->
+
+<script src='phaser.min.js'></script>
+<script src='phaser.js'></script>
+<script>
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+/*******************************************
+*****All game variables are made here.******
+*******************************************/
+
+//variables relating to audio
+var backgroundMusic;
+var backgroundMusicBoost;
+var chaosEmeraldAudioToggle = false;
+
+//variables relating to platforms
+var platforms;
+var floatingPlatform;
+var floatingPlatforms;
+var bridge;
+var sand;
+
+//variables relating to time
+var milliseconds = 0;
+var seconds = 0;
+var minutes = 0;
+
+//variables relating to score
+var score = 0;
+var scoreText;
+var timerScore = 5000;
+var goalSign = false;
+
+//variables relating to rings
+var ringsScore = 0;
+var ringText;
+var rings = new Array();
+var ringSeconds = 0;
+var ringTimerCount;
+var ringLoss = false;
+
+//variables relating to lives
+var life1;
+var life2;
+var life3;
+var lives = 3;
+var livesText;
+
+//variables relating to objects
+var spring;
+var springDiagonalRight;
+var springDiagonalLeft;
+var booster;
+var timer;
+var trueGoalSign;
+
+//variables relating to shadow
+var right = true;
+var spindash = false;
+var playerInvincibility = false;
+
+//variables relating to enemies
+var waspEnemies = new Array();
+var crabEnemies = new Array();
+var crab;
+
+//variables relating to Chaos Emeralds
+var emeraldCount;
+var finalChaosEmeralds = 0;
+var chaosEmeraldRings = true;
+
+var redEmeraldCount = 0;
+var blueEmeraldCount = 0;
+var yellowEmeraldCount = 0;
+var greenEmeraldCount = 0;
+var silverEmeraldCount = 0;
+var turquoiseEmeraldCount = 0;
+var pinkEmeraldCount = 0;
+
+var redEmerald;
+var blueEmerald;
+var yellowEmerald;
+var greenEmerald;
+var silverEmerald;
+var turquoiseEmerald;
+var pinkEmerald;
+
+var emeraldArray = new Array();
+
+var chaosScore = 0;
+var trueRingScore = 0;
+
+/**************************
+*****Custom Functions******
+**************************/
+
+/*****************************************
+*****Return Function With Parameters******
+*****************************************/
+
+//function to see if a sprite is overlapping another sprite
+function overlap(spriteA, spriteB) {  
+    var boundsA = spriteA.getBounds();
+    var boundsB = spriteB.getBounds();
+    return Phaser.Rectangle.intersects(boundsA, boundsB);
+}
+
+/*************************************
+*****Function Without Parameters******
+*************************************/
+
+//function to check if the player is overlapping any of the objects in the game
+function checkForOverlap() {
+    if(overlap(player, spring))//Makes player bounce up in the air if they touch the spring
+    {
+        game.sound.play('springSound');
+        player.animations.play('jump');
+        player.y--;
+        player.body.velocity.y = -750;
+    }
+    if(overlap(player, springDiagonalLeft))
+    {
+       game.sound.play('springSound');
+       player.animations.play('jump');
+       player.y--;
+       player.body.velocity.y = -400;
+       player.x--;
+       player.body.velocity.x = -1000;
+    }
+    if(overlap(player, springDiagonalRight))
+    {
+       game.sound.play('springSound');
+       player.animations.play('jump');
+       player.y--;
+       player.body.velocity.y = -400;
+       player.x++;
+       player.body.velocity.x = 1000;
+    }
+}
+
+/********************************************
+*****Return Function Without Parameters******
+********************************************/
+
+//function to return a value based on current life count
+function livesCheck()
+{
+    if(overlap(player, crab) == true && this.spindash == false && lives == 3 && playerInvincibility == false) return 3;
+
+    else if(overlap(player, crab) == true && this.spindash == false && lives == 2  && playerInvincibility == false) return 2;
+
+    else if(overlap(player, crab) == true && this.spindash == false && lives == 1  && playerInvincibility == false) return 1;
+}
+
+/**********************************
+*****Function With Parameters******
+**********************************/
+
+//function to control player's velocity
+function speed(currentVelocity)
+{
+    if(currentVelocity == 'runRight') player.body.velocity.x = 500;
+
+    else if(currentVelocity == 'runLeft') player.body.velocity.x = -500;
+
+    else if(currentVelocity == 'dashRight') player.body.velocity.x = 1000;
+
+    else if(currentVelocity == 'dashLeft') player.body.velocity.x = -1000;
+
+    else if(currentVelocity == 'jumpRight') player.body.velocity.x = 375;
+
+    else if(currentVelocity == 'jumpLeft') player.body.velocity.x = -375;
+
+    else if(currentVelocity == 'jump') player.body.velocity.y = -350;
+
+    else if(currentVelocity == 'crouchRight') player.body.velocity.x = 200;
+
+    else if(currentVelocity == 'crouchLeft') player.body.velocity.x = -200;
+
+    else if(currentVelocity == 'crouchDashLeft') player.body.velocity.x = -400;
+
+    else if(currentVelocity == 'crouchDashRight') player.body.velocity.x = 400;
+}
+
+//Function that toggles invincibility, makes it false
+function toggleInvincibility()
+{
+    playerInvincibility = false;
+}
+//Function used to play boosted version of Background Music, by changing the volume
+function boostBackgroundMusic()
+{
+    backgroundMusicBoost.volume = 1.0;
+    backgroundMusic.volume = 0;
+}
+
+//Function used to play normal version of Background Music, by changing the volume
+function backgroundMusicNormal()
+{
+    backgroundMusicBoost.volume = 0;
+    backgroundMusic.volume = 0.5;
+}
+
+//function to update time, got the code from a discussion site
+function updateTimer() 
+{   
+    if(goalSign == false)
+    {
+    minutes = Math.floor(game.time.now / 60000) % 60;
+    seconds = Math.floor(game.time.now / 1000) % 60;   
+    milliseconds = Math.floor(game.time.now) % 100;
+    if(timerScore > 0) timerScore--;
+    if (milliseconds < 10) milliseconds = '0' + milliseconds;
+    if (seconds < 10) seconds = '0' + seconds;
+    if (minutes < 10) minutes = '0' + minutes;
+    timer.setText('Time: ' + minutes + ':'+ seconds + ':' + milliseconds);
+    }
+}
+
+//This function decreases rings every time you boost(later on in the code)
+function updateRingCounter()
+{
+    if(this.ringLoss == true && ringsScore > 0) ringsScore--;
+}
+
+function preload() {
+    //backgrounds
+    game.load.image('villages', 'shadassets2/waterPalace1.png');
+    game.load.image('castle', 'shadassets2/waterPalace2.png');
+    game.load.image('backgroundSky', 'shadassets2/skyBackground.png');
+
+    //platforms
+    game.load.image('startPlatform', 'shadassets2/startPlatform.png');
+    game.load.image('middlePlatform', 'shadassets2/middlePlatform.png');
+    game.load.image('endPlatform', 'shadassets2/endPlatform.png');
+    game.load.spritesheet('floatingPlatform', 'shadassets2/floatingPlatforms.png', 153, 98.5);
+    game.load.image('startBigPlatform', 'shadassets2/startbigPlatform1.png');
+    game.load.image('middleBigPlatform', 'shadassets2/bigPlatform1.png');
+    game.load.image('endBigPlatform', 'shadassets2/endbigPlatform1.png');
+    game.load.image('startBigPlatformExtension', 'shadassets2/startBigPlatFormExtension1.png');
+    game.load.image('middleBigPlatformExtension', 'shadassets2/bigPlatformExtension1.png');
+    game.load.image('endBigPlatformExtension', 'shadassets2/endBigPlatFormExtension1.png');
+
+    //objects
+    game.load.image('spring', 'shadassets2/springNormal.png');
+    game.load.image('springDiagonalRight', "shadassets2/springDiagonalLeft.png");
+    game.load.image('springDiagonalLeft', "shadassets2/springDiagonalRight.png");
+    game.load.image('booster', 'shadassets2/booster.png');
+    game.load.image('goalSign', 'shadassets2/goalSign.png');
+
+    //bridge
+    game.load.image('startBridge', 'shadassets2/startBridge.png');
+    game.load.image('middleBridge', 'shadassets2/middleBridge.png');
+    game.load.image('endBridge', 'shadassets2/endBridge.png');
+
+    //enemies
+    game.load.spritesheet('waspEnemy', 'shadassets2/waspSpritesheet.png', 31, 36);
+    game.load.spritesheet('crabEnemy', 'shadassets2/crabmeatSpritesheet.png', 46, 36);
+    game.load.image('bullet', 'shadassets2/sonicbullet.png');
+
+    //Shadow sprites
+    game.load.spritesheet('shadow', 'shadassets2/shadowTestCorrection2.png', 42, 38);
+    game.load.spritesheet('chaosBlast', 'shadassets2/shadowblastSpritesheet.png', 64, 55);
+
+    //collectibles
+    game.load.spritesheet('redChaosEmerald', 'shadassets2/redChaosEmerald.png', 18.4, 16);//1st Chaos Emerald
+    game.load.spritesheet('blueChaosEmerald', 'shadassets2/blueChaosEmerald.fw.png', 18.4, 16);//2nd Chaos Emerald
+    game.load.spritesheet('yellowChaosEmerald', 'shadassets2/yellowChaosEmerald.png', 18.4, 16);//3rd Chaos Emerald
+    game.load.spritesheet('greenChaosEmerald', 'shadassets2/greenChaosEmerald.png', 18.4, 16);//4th Chaos Emerald
+    game.load.spritesheet('silverChaosEmerald', 'shadassets2/silverChaosEmerald.png', 18.4, 16);//5th Chaos Emerald
+    game.load.spritesheet('turquoiseChaosEmerald', 'shadassets2/turquoiseChaosEmerald.png', 18.4, 16);//6th Chaos Emerald
+    game.load.spritesheet('pinkChaosEmerald', 'shadassets2/pinkChaosEmerald.png', 18.4, 16);//7th Chaos Emerald
+    game.load.spritesheet('rings', 'shadassets2/ringsAndSparkles.fw.png', 23.75, 20);
+
+    //all audio
+    game.load.audio('ringCollect', 'Shadow Sound Effects/rings.mp3');
+    game.load.audio('jumpSound', 'Shadow Sound Effects/jump.mp3');
+    game.load.audio('backgroundMusic', 'Shadow Sound Effects/sunsetHeights.mp3');
+    game.load.audio('springSound', 'Shadow Sound Effects/spring.mp3');
+    game.load.audio('enemySound', 'Shadow Sound Effects/badnik.mp3');
+    game.load.audio('boostBackgroundMusic', 'Shadow Sound Effects/sunsetHeightsBoost.mp3');
+    game.load.audio('chaosEmeraldSound', "Shadow Sound Effects/chaosEmeraldSound.mp3");
+    game.load.audio('damnFourth', "Shadow Sound Effects/damn4th.mp3")
+
+    //icons
+    game.load.image('lives', 'shadassets2/life.png');
+    game.load.image('redChaosEmeraldGUI', 'shadassets2/redChaosEmeraldGUI.png');
+    game.load.image('blueChaosEmeraldGUI', 'shadassets2/blueChaosEmeraldGUI.png');
+    game.load.image('yellowChaosEmeraldGUI', 'shadassets2/yellowChaosEmeraldGUI.png');
+    game.load.image('greenChaosEmeraldGUI', 'shadassets2/greenChaosEmeraldGUI.png');
+    game.load.image('silverChaosEmeraldGUI', 'shadassets2/silverChaosEmeraldGUI.png');
+    game.load.image('turquoiseChaosEmeraldGUI', 'shadassets2/turquoiseChaosEmeraldGUI.png');
+    game.load.image('pinkChaosEmeraldGUI', 'shadassets2/pinkChaosEmeraldGUI.png');
+}
+
+/*function createBullets()
+{
+    
+}*/
+
+function create() {
+
+    /*********************
+    ******Game World******
+    *********************/
+
+    game.world.resize(20000, 1400);
+
+    //  We're going to be using physics, so enable the Arcade Physics system
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    /*********************
+    *********Skies********
+    *********************/
+
+    var skies1 = new Array();
+    var skyX = 0;
+
+    //repeats displaying the sky background
+    for(var m=0; m<30; m++)
+    {
+        skies1[m] = game.add.sprite(skyX, game.world.height - 456, 'castle');
+        skies1[m].scale.setTo(2, 2);
+        skyX += 1024;
+    }
+
+    var skies2 = new Array();
+    var skyX2 = 0;
+
+    //repeats displaying the second sky background
+    for(var q=0; q<30; q++)
+    {
+        skies2[q] = game.add.sprite(skyX2, game.world.height - 898, 'villages');
+        skies2[q].scale.setTo(2, 2);
+        skyX2 += 1020;
+    }
+    var skies3 = new Array();
+    var skyX3 = 0;
+
+    //repeats displaying the third sky background
+    for(var y=0; y<30; y++)
+    {
+        skies3[y] = game.add.sprite(skyX3, game.world.height - 1498, 'backgroundSky');
+        skyX3 += 800;
+    }
+
+    /*********************
+    *******Objects********
+    *********************/
+
+    spring = game.add.sprite(5020, game.world.height - 534, 'spring');
+
+    /*********************
+    *******Platforms******
+    *********************/
+
+    platforms = game.add.group();
+    platforms.enableBody = true;
+    
+    var ground = platforms.create(0, game.world.height - 48, 'startPlatform');//This is the starting platform
+    ground.body.immovable = true;//This stops the platforms from falling away when you jump on it
+    
+    var ground2 = new Array();
+    var ground2X = 112;
+
+    // Here we create the middle platforms, so we avoid copying and pasting the same thing
+    for(var m=0; m < 30; m++)
+    {
+        ground2[m] = platforms.create(ground2X, game.world.height - 48, 'middlePlatform');
+        ground2[m].body.immovable = true;
+        ground2X += 112;
+    }
+
+    var ground3 = platforms.create(3470, game.world.height - 48, 'endPlatform');//This is the end platform
+    ground3.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    //adding platforms to game screen
+    var ledge = platforms.create(3750, game.world.height - 200, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ledge = platforms.create(4100, game.world.height - 300, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ledge = platforms.create(4500, game.world.height - 450, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ledge = platforms.create(4900, game.world.height - 520, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ledge = platforms.create(5300, game.world.height - 380, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ledge = platforms.create(5500, game.world.height - 280, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platform from falling away when you jump on it
+
+    ledge = platforms.create(5700, game.world.height - 260, 'floatingPlatform');//This is a floating platform
+    //No immovable properties for this platform, just for a slight challenge
+    ledge = platforms.create(5950, game.world.height - 230, 'floatingPlatform');//This is a floating platform
+    ledge.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    ground = platforms.create(5450, game.world.height - 1000, 'startPlatform')//This is a start platform
+    ground.body.immovable = true;//This stops the platforms from falling away when you jump on it
+
+    var middleBridges3Movable = platforms.create(5562, game.world.height - 1000, 'middleBridge');//This is a movable middlebridge
+    middleBridges3Movable = platforms.create(5754, game.world.height - 1000, 'middleBridge');//This is a movable middlebridge
+    middleBridges3Movable = platforms.create(5946, game.world.height - 1000, 'middleBridge');//This is a movable middlebridge
+    middleBridges3Movable = platforms.create(6138, game.world.height - 1000, 'middleBridge');//This is a movable middlebridge
+
+    var middleBridges3 = new Array();
+    var middleBridgeX3 = 6330;
+
+    //this loop creates middle bridges
+    for(var m = 0; m < 14; m++)
+    {
+        middleBridges3[m] = platforms.create(middleBridgeX3, game.world.height - 1000, 'middleBridge');
+        middleBridges3[m].body.immovable = true;
+        middleBridgeX3+= 192;
+    }
+
+    bridge = platforms.create(6300, game.world.height - 115, 'startBridge');//This is a startbridge
+    bridge.body.immovable = true;//This stops the bridge from falling away when you jump on it
+
+    var middleBridges = new Array();
+    var middleBridgeX = 6492;
+
+    //Here we create a bridge loop so we don't have to copy and paste the same platform
+    for(var m = 0; m < 3; m++)
+    {
+        middleBridges[m] = platforms.create(middleBridgeX, game.world.height - 115, 'middleBridge');
+        middleBridges[m].body.immovable = true;
+        middleBridgeX+= 192;
+    }
+
+    bridge = platforms.create(7068, game.world.height - 115, 'endBridge');//This is an end bridge
+    bridge.body.immovable = true;//This stops the bridge from falling away when you jump on it
+
+    bridge = platforms.create(7500, game.world.height - 115, 'startBridge');//This is a start Bridge
+    bridge.body.immovable = true;//This stops the bridge from falling away when you jump on it
+
+    var middleBridges2 = new Array();
+    var middleBridgeX2 = 7500;
+
+    //Here we create a bridge loop so we don't have to copy and paste the same platform
+    for(var m = 0; m < 3; m++)
+    {
+        middleBridges2[m] = platforms.create(middleBridgeX2, game.world.height - 115, 'middleBridge');
+        middleBridges2[m].body.immovable = true;
+        middleBridgeX2+= 192;
+    }
+
+    bridge = platforms.create(8076, game.world.height - 115, 'endBridge');//This is an end bridge
+    bridge.body.immovable = true;//This stops the bridge from falling away when you jump on it
+
+    ground = platforms.create(8500, game.world.height - 48, 'startPlatform');//This is a start platform
+    ground.body.immovable = true;//This stops the platform from falling away when you jump on it
+
+    var groundEndMiddlePlatforms = new Array();
+    var groundEndMiddlePlatformsX = 8612;
+
+    //Here we create the middle platforms, so we avoid copying and pasting the same thing
+    for(var m=0; m < 30; m++)
+    {
+        groundEndMiddlePlatforms[m] = platforms.create(groundEndMiddlePlatformsX, game.world.height - 48, 'middlePlatform');
+        groundEndMiddlePlatforms[m].body.immovable = true;
+        groundEndMiddlePlatformsX += 112;
+    }
+    var startBigPlatform = platforms.create(11977, game.world.height - 375, 'startBigPlatform');
+    startBigPlatform.body.immovable = true;
+
+    var startBigPlatformExtension = platforms.create(11977, game.world.height - 115, 'startBigPlatformExtension');
+    startBigPlatformExtension.body.immovable = true;
+
+    startBigPlatformExtension = platforms.create(11977, game.world.height - 230, 'startBigPlatformExtension');
+    startBigPlatformExtension.body.immovable = true;
+
+    var middleBigPlatformExtension = new Array();
+    var middleBigPlatformExtensionX = 11992;
+    //Here we create the middle platforms, so we avoid copying and pasting the same thing
+    for(var m=0; m < 30; m++)
+    {
+        middleBigPlatformExtension[m] = platforms.create(middleBigPlatformExtensionX, game.world.height - 94, 'middleBigPlatformExtension');
+        middleBigPlatformExtension[m] = platforms.create(middleBigPlatformExtensionX, game.world.height - 222, 'middleBigPlatformExtension');
+        middleBigPlatformExtension[m] = platforms.create(middleBigPlatformExtensionX, game.world.height - 375, 'middleBigPlatform');
+        middleBigPlatformExtension[m].body.immovable = true;
+        middleBigPlatformExtensionX += 56;
+    }
+
+    //These are all extra middle Platform Extensions
+    middleBigPlatformExtension[30] = platforms.create(11460, game.world.height - 380, 'middleBigPlatformExtension');
+    middleBigPlatformExtension[30].body.immovable = true;
+
+    middleBigPlatformExtension[31] = platforms.create(11460, game.world.height - 499, 'middleBigPlatformExtension');
+    middleBigPlatformExtension[31].body.immovable = true;
+
+    middleBigPlatformExtension[32] = platforms.create(11460, game.world.height - 611, 'middleBigPlatformExtension');
+    middleBigPlatformExtension[32].body.immovable = true;
+
+    middleBigPlatformExtension[33] = platforms.create(11460, game.world.height - 730, 'middleBigPlatformExtension');
+    middleBigPlatformExtension[33].body.immovable = true;
+
+    middleBigPlatformExtension[34] = platforms.create(11460, game.world.height -841, 'middleBigPlatformExtension');
+    middleBigPlatformExtension[34].body.immovable = true;
+
+    //adding life icons to the game screen
+    life1 = game.add.sprite(120, game.world.height - 590, 'lives');
+    life1.scale.setTo(0.08, 0.08);
+
+    life2 = game.add.sprite(170, game.world.height - 590, 'lives');
+    life2.scale.setTo(0.08, 0.08);
+
+    life3 = game.add.sprite(220, game.world.height - 590, 'lives');
+    life3.scale.setTo(0.08, 0.08);
+
+    /*********************
+    ********Player********
+    *********************/
+
+    // The player and its settings
+    player = game.add.sprite(30, game.world.height - 117, 'shadow');
+    player.scale.setTo(1.5, 1.5);
+
+    //We need to enable physics on the player
+    game.physics.arcade.enable(player);
+
+    //Player physics properties
+    player.body.gravity.y = 390;
+    player.body.collideWorldBounds = true;
+
+    //Player Animations
+    player.animations.add('left', [15, 16, 17, 18, 19], 10, true);
+    player.animations.add('right', [22, 23, 24, 25, 26], 10, true);
+    player.animations.add('waitright', [36, 38, 39, 40, 41], 10, true);
+    player.animations.add('waitleft', [37, 42, 43, 44, 45], 10, true);
+    player.animations.add('jump', [28, 29, 30, 31], 20, true);
+    player.animations.add('hurt', [2, 3], 1, false);
+    player.animations.add('boostRight', [46, 47, 48, 49], 15, true);
+    player.animations.add('boostLeft', [50, 51, 52, 53], 15, true);
+    
+    /*********************
+    *******Enemies********
+    *********************/
+
+    waspEnemies[0] = game.add.sprite(700, game.world.height - 200, 'waspEnemy');
+    waspEnemies[0].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[0].scale.setTo(1.5, 1.5);
+
+    crabEnemies[0] = game.add.sprite(1000, game.world.height - 92, 'crabEnemy');
+    crabEnemies[0].animations.add('crabMove', [0, 1, 2], 10, true);
+    crabEnemies[0].scale.setTo(1.5, 1.5);
+
+    var wasp;
+    var waspEnemyY = game.world.height - 200; 
+    var waspEnemyX = 1200;
+
+    //this loop creates wasp enemies and adds animations to them
+    for(var w = 1; w < 6; w++)
+    {
+        wasp = game.add.sprite(waspEnemyX, waspEnemyY, 'waspEnemy');
+        waspEnemies.push(wasp);
+        waspEnemyY-= 150
+        waspEnemyX+= 200
+        wasp.animations.add('waspMove', [0, 1], 10, true);
+        wasp.scale.setTo(1.5, 1.5);
+    }
+
+    waspEnemies[6] = game.add.sprite(9800, game.world.height - 200, 'waspEnemy');
+    waspEnemies[6].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[6].scale.setTo(1.5, 1.5);
+
+    waspEnemies[7] = game.add.sprite(10000, game.world.height - 350, 'waspEnemy');
+    waspEnemies[7].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[7].scale.setTo(1.5, 1.5);
+
+    waspEnemies[8] = game.add.sprite(9800, game.world.height - 500, 'waspEnemy');
+    waspEnemies[8].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[8].scale.setTo(1.5, 1.5);
+
+    waspEnemies[9] = game.add.sprite(10000, game.world.height - 650, 'waspEnemy');
+    waspEnemies[9].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[9].scale.setTo(1.5, 1.5);
+
+    waspEnemies[10] = game.add.sprite(9800, game.world.height - 800, 'waspEnemy');
+    waspEnemies[10].animations.add('waspMove', [0, 1], 10, true);
+    waspEnemies[10].scale.setTo(1.5, 1.5);
+
+    var crab;
+    var crabEnemyX = 1600;
+
+    //this loop creates crab enemies and adds animations to them
+    for(var c = 1; c < 6; c++)
+    {
+        crab = game.add.sprite(crabEnemyX, game.world.height - 92, 'crabEnemy');
+        crabEnemies.push(crab);
+        crabEnemyX+= 200;
+        crab.animations.add('crabMove', [0, 1, 2], 10, true);
+        crab.scale.setTo(1.5, 1.5);
+    }
+
+    //Enables physics onto the enemies to make them move
+    game.physics.arcade.enable(waspEnemies);
+    game.physics.arcade.enable(crabEnemies);
+
+    /*********************
+    *****Collectibles*****
+    *********************/
+
+    var ring;//holds each ring
+    var ringx = 300;//x coordinate of each ring
+
+    //in this loop, rings are added to an array and are being created
+    for(var c=0;c<20;c++){
+        ring=game.add.sprite(ringx,game.world.height - 76,'rings');
+        rings.push(ring);
+        ringx+=50;
+        ring.scale.setTo(1.25, 1.25);
+        ring.animations.add('ringsSpin', [0, 1, 2, 3, 4], 15, true);
+    }
+
+    var ringsBridgeX = 7000;
+    for(var c=20;c<40;c++){
+        ring=game.add.sprite(ringsBridgeX,game.world.height - 1030,'rings');
+        rings.push(ring);
+        ringsBridgeX+=50;
+        ring.scale.setTo(1.25, 1.25);
+        ring.animations.add('ringsSpin', [0, 1, 2, 3, 4], 15, true);
+    }
+
+    var ringsOnLowerBridgeX = 6320;
+    for(var c=40;c<55;c++){
+        ring=game.add.sprite(ringsOnLowerBridgeX,game.world.height - 140,'rings');
+        rings.push(ring);
+        ringsOnLowerBridgeX+=50;
+        ring.scale.setTo(1.25, 1.25);
+        ring.animations.add('ringsSpin', [0, 1, 2, 3, 4], 15, true);
+    }
+
+     var ringsOnLowerBridgeX2 = 7520;
+    for(var c=55;c<63;c++){
+        ring=game.add.sprite(ringsOnLowerBridgeX2,game.world.height - 140,'rings');
+        rings.push(ring);
+        ringsOnLowerBridgeX2+=50;
+        ring.scale.setTo(1.25, 1.25);
+        ring.animations.add('ringsSpin', [0, 1, 2, 3, 4], 15, true);
+    }
+
+    //Creates the Goal Sign
+    trueGoalSign = game.add.sprite(11000, game.world.height - 100, 'goalSign');
+
+    //Creates each Chaos Emerald to be collected
+    redEmerald = game.add.sprite(1000, game.world.height - 200,'redChaosEmerald');
+    redEmerald.animations.add('emerald1', [0, 1, 2, 3, 4], 10, true);
+    redEmerald.scale.setTo(1.5, 1.5);
+
+    blueEmerald = game.add.sprite(2000, game.world.height - 850,'blueChaosEmerald');
+    blueEmerald.animations.add('emerald2', [0, 1, 2, 3, 4], 10, true);
+    blueEmerald.scale.setTo(1.5, 1.5);
+
+    yellowEmerald = game.add.sprite(8100, game.world.height - 1100,'yellowChaosEmerald');
+    yellowEmerald.animations.add('emerald3', [0, 1, 2, 3, 4], 10, true);
+    yellowEmerald.scale.setTo(1.5, 1.5);
+
+    greenEmerald = game.add.sprite(8100, game.world.height - 300,'greenChaosEmerald');
+    greenEmerald.animations.add('emerald4', [0, 1, 2, 3, 4], 10, true);
+    greenEmerald.scale.setTo(1.5, 1.5);
+
+    silverEmerald = game.add.sprite(10000, game.world.height - 825,'silverChaosEmerald');
+    silverEmerald.animations.add('emerald5', [0, 1, 2, 3, 4], 10, true);
+    silverEmerald.scale.setTo(1.5, 1.5);
+
+    turquoiseEmerald = game.add.sprite(11000, game.world.height - 200,'turquoiseChaosEmerald');
+    turquoiseEmerald.animations.add('emerald6', [0, 1, 2, 3, 4], 10, true);
+    turquoiseEmerald.scale.setTo(1.5, 1.5);
+
+    pinkEmerald = game.add.sprite(13500, game.world.height - 400,'pinkChaosEmerald');
+    pinkEmerald.animations.add('emerald7', [0, 1, 2, 3, 4], 10, true);
+    pinkEmerald.scale.setTo(1.5, 1.5);
+
+    //Creates emerald icons
+    redChaosEmeraldGUI = game.add.sprite(0, game.world.height - 553,'redChaosEmeraldGUI');
+    blueChaosEmeraldGUI = game.add.sprite(30, game.world.height - 550,'blueChaosEmeraldGUI');
+    yellowChaosEmeraldGUI = game.add.sprite(62, game.world.height - 553,'yellowChaosEmeraldGUI');
+    greenChaosEmeraldGUI = game.add.sprite(90, game.world.height - 550,'greenChaosEmeraldGUI');
+    silverChaosEmeraldGUI = game.add.sprite(120, game.world.height - 550,'silverChaosEmeraldGUI');
+    turquoiseChaosEmeraldGUI = game.add.sprite(150, game.world.height - 550,'turquoiseChaosEmeraldGUI');
+    pinkChaosEmeraldGUI = game.add.sprite(180, game.world.height - 550,'pinkChaosEmeraldGUI');
+
+    //Adds text with custom font, counting the rings
+    ringText = game.add.text(16, game.world.height - 500, 'Rings: 0', { fontSize: '32px', fill: '#000' });
+
+    //Adds text with custom font, counting the score
+    scoreText = game.add.text(16, game.world.height - 550, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+    //Adds text to indicate lives
+    livesText = game.add.text(16, game.world.height - 590, 'Lives:', { fontSize: '32px', fill: '#000' });
+
+    //Adds text with custom font, counting the time
+    timer = game.add.text(16, game.world.height - 450, 'Timer: 00:00:00', { fontSize: '32px', fill: '#000' })
+    //Creates springs that appear later in the level(this is the one that launches you to the left)
+    springDiagonalLeft = game.add.sprite(11950, game.world.height - 200, 'springDiagonalLeft');
+    springDiagonalLeft.scale.setTo(1.5, 1.5);
+    //Creates springs that appear later in the level(this is the one that launches you to the right)
+    springDiagonalRight = game.add.sprite(11500, game.world.height - 300, 'springDiagonalRight');
+    springDiagonalRight.scale.setTo(1.5, 1.5);
+
+    //Loop event for updating the ring counter when you boost
+    game.time.events.loop(Phaser.Timer.SECOND/4, updateRingCounter, this);
+
+    //Loops the event for toggling invincibility, makes it false after every 4 seconds
+    game.time.events.loop(Phaser.Timer.SECOND*3, toggleInvincibility, this);
+
+    //Adds texts displaying the amount of emeralds collected
+    emeraldCount = game.add.text(16, game.world.height - 600, redEmeraldCount + '  ' + blueEmeraldCount + '  ' + yellowEmeraldCount + '  ' + greenEmeraldCount + '  ' + silverEmeraldCount + '  ' + turquoiseEmeraldCount + '  ' + pinkEmeraldCount, { fontSize: '32px', fill: '#000' });
+
+    //Plays Background Music at a certain volume and loops it
+    backgroundMusic = game.add.audio('backgroundMusic');
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = 0.5;
+    backgroundMusic.play();
+
+    //Plays the boost version of the background music and loops it, makes it mute for now
+    backgroundMusicBoost = game.add.audio('boostBackgroundMusic');
+    backgroundMusicBoost.loop = true;
+    backgroundMusicBoost.volume = 0;
+    backgroundMusicBoost.play();
+}
+
+function update() {
+
+    //Custom functions play
+    updateTimer();
+
+    checkForOverlap();
+
+    //plays the animations of the chaos emeralds
+    redEmerald.animations.play('emerald1');//Red Chaos Emerald
+    blueEmerald.animations.play('emerald2');//Blue Chaos Emerald
+    yellowEmerald.animations.play('emerald3');//Yellow Chaos Emerald
+    greenEmerald.animations.play('emerald4');//Green Chaos Emerald
+    silverEmerald.animations.play('emerald5');//Silver Chaos Emerald
+    turquoiseEmerald.animations.play('emerald6');//Turquoise Chaos Emerald
+    pinkEmerald.animations.play('emerald7');//Pink Chaos Emerald
+
+    //if the player falls in an empty gap, the game over screen will show
+    if(player.body.y >= game.world.height - 90)
+    {
+        window.location.href = 'gameOver.html';
+    }
+
+    var wasp;
+
+    //gets the current wasp from the wasp array
+    for(var x = 0;x < waspEnemies.length; x++){
+        wasp=waspEnemies[x];
+        wasp.animations.play('waspMove');
+
+        if(overlap(player, wasp) && this.spindash == true)
+        {
+            game.sound.play('enemySound');
+            wasp.body.y -=4000;
+            player.body.velocity.y = -325;
+        }
+    }
+       
+    //gets the current crab from the crab array
+    for(var x = 0; x < crabEnemies.length; x++)
+    {
+        crab = crabEnemies[x];
+        crab.animations.play('crabMove');
+        crab.body.velocity.x = -40;//Moves the crab at a velocity of 40
+
+        //if in spindash, the player will kill the enemy, take no damage and gain score
+        if(overlap(player, crab) == true && this.spindash == true)
+        {
+            game.sound.play('enemySound');
+            crab.body.y -=4000;
+            player.body.velocity.y = -325;
+        }
+
+        //if the livesCheck function is 3, remove a life
+        else if(livesCheck() == 3)
+        {
+            playerInvincibility = true; 
+            life3.kill();
+            player.animations.play('hurt');
+            player.body.x-= 100;
+            player.body.velocity.x =-300;      
+            lives--;
+        }
+
+        //if the livesCheck function is 2, remove a life
+        else if(livesCheck() == 2)
+        {
+            playerInvincibility = true; 
+            life2.kill();
+            player.animations.play('hurt');
+            player.body.x-= 100;
+            player.body.velocity.x = - 300;  
+            lives--;
+        }
+
+        //if the livesCheck function is 1, remove a life, game over screen pops up
+        else if(livesCheck() == 1)
+        {
+            life1.kill();
+            window.location.href = 'gameOver.html';
+        } 
+
+        else if(livesCheck() == 4)
+        {
+            player.body.x-=5;
+            player.body.velocity.x = - 100
+        }
+    }
+
+    var ring;
+
+    //this loop gets the current ring from the rings array
+    for(var x = 0; x < rings.length; x++){
+        ring=rings[x];
+        ring.animations.play('ringsSpin');
+
+        //if the player overlaps a ring, the player gets an increase in score and ring count
+        if(overlap(player, ring))
+        {
+            game.sound.play('ringCollect');
+            ring.x = -100;
+            ring.y = -200;
+            trueRingScore+= 20;
+            ringsScore+=1;
+            score+=20;           
+        }
+    }
+
+    //Displays Chaos Emerald Count, updates every time you collect one
+    if(finalChaosEmeralds < 7)
+    {
+        emeraldCount.text = redEmeraldCount + '  ' + blueEmeraldCount + '  ' + yellowEmeraldCount + '  ' + greenEmeraldCount + '  ' + silverEmeraldCount + '  ' + turquoiseEmeraldCount + '  ' + pinkEmeraldCount;
+    }
+    //Once Chaos Emerald Count reaches 7, you get 50 rings(only once per game), and the text changes
+    if(finalChaosEmeralds == 7)
+    {
+        if(chaosEmeraldRings == true) 
+            {
+                ringsScore+=50
+                chaosEmeraldRings = false;
+            }
+        emeraldCount.text = "You collected all the Chaos Emeralds!";
+    }
+
+    //These if and else if statements make it so that if the player overlaps a certain emerald, their emerald count of that color will increase by 1, and it will play audio respectively
+    if(overlap(player, redEmerald))
+    {
+        chaosScore+= 600;
+        redEmerald.y = -4000;
+        score+= 600;
+        redEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, blueEmerald))
+    {
+        chaosScore+= 600;
+        blueEmerald.y = -4000;
+        score+= 600;
+        blueEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, yellowEmerald))
+    {
+        chaosScore+= 600;
+        yellowEmerald.y = -4000;
+        score+= 600;
+        yellowEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, greenEmerald))
+    {
+        chaosScore+= 600;
+        greenEmerald.y = -4000;
+        score+= 600;
+        greenEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, silverEmerald))
+    {
+        chaosScore+= 600;
+        silverEmerald.y = -4000;
+        score+= 600;
+        silverEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, turquoiseEmerald))
+    {
+        chaosScore+= 600;
+        turquoiseEmerald.y = -4000;
+        score+= 600;
+        turquoiseEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+
+    else if(overlap(player, pinkEmerald))
+    {
+        chaosScore+= 600;
+        pinkEmerald.y = -4000;
+        score+= 600;
+        pinkEmeraldCount++;
+        finalChaosEmeralds++;
+        if(finalChaosEmeralds == 3) game.sound.play('damnFourth');
+        else game.sound.play('chaosEmeraldSound');
+    }
+    
+    //updates the score and ring text
+    scoreText.text = 'Score: ' + score;
+    ringText.text = 'Rings: ' + ringsScore;
+
+    //Creates a cursors key function and makes the player be able to hit platforms
+    cursors = game.input.keyboard.createCursorKeys();
+    var hitPlatform = game.physics.arcade.collide(player, platforms);
+
+    //Slows down the player
+     if(player.body.velocity.x > 0)
+        player.body.velocity.x -= 15;
+
+      else if(player.body.velocity.x < 0)
+            player.body.velocity.x += 15;
+
+        backgroundMusicNormal();
+    
+    //Key press event variables
+    var dashKey = game.input.keyboard.isDown(Phaser.Keyboard.D);
+    var spaceKey = game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR);
+
+    /********************
+    ***No Keys Pressed***
+    ********************/
+
+    if ((cursors.right.isDown == false && cursors.left.isDown == false && cursors.down.isDown == false) || (cursors.right.isDown == true && cursors.left.isDown == true))
+    {
+        backgroundMusicNormal();
+        this.ringLoss = false;
+        if(player.body.touching.down == false)
+        {
+            //if the player is pressing nothing, the player will go in a spindash
+            player.animations.play('jump');
+            this.spindash = true;
+        }
+
+        else
+        {
+            if(this.right == true)
+            {
+                //Stand still facing right
+                this.spindash = false;
+                player.animations.play('waitright');
+            }
+            if(this.right == false)
+            {
+                //Stand still facing left
+                this.spindash = false;
+                player.animations.play('waitleft');
+            } 
+        }
+    }
+
+    /********************
+    **Right Key Pressed**
+    ********************/
+
+    if (dashKey == true && cursors.right.isDown && hitPlatform && cursors.down.isDown == false && cursors.left.isDown == false && ringsScore > 0)
+    { 
+        boostBackgroundMusic();
+        this.right = true;
+        this.ringLoss = true;
+        this.spindash = true;
+        player.animations.play('boostRight');
+        speed('dashRight')
+    }
+    
+    else if (cursors.right.isDown && player.body.touching.down && cursors.down.isDown == false && cursors.left.isDown == false)
+    {
+        backgroundMusicNormal();
+        this.ringLoss = false;
+        this.spindash = false;
+        this.right = true;
+
+        //  Move to the right
+        player.animations.play('right');
+        if(player.body.velocity.x < speed('runRight'))
+        {
+            player.body.velocity.x +=1;
+        }
+    }
+
+    /*******************
+    **Left Key Pressed**
+    *******************/
+
+    if(dashKey == true && cursors.left.isDown && player.body.touching.down && hitPlatform && cursors.down.isDown == false && cursors.right.isDown == false && ringsScore > 0)
+    {
+        boostBackgroundMusic();
+        this.right = false;
+        this.ringLoss = true;
+        speed('dashLeft');
+        this.spindash = true;
+        player.animations.play('boostLeft');
+    }
+
+    else if (cursors.left.isDown && player.body.touching.down && cursors.down.isDown == false && cursors.right.isDown == false)
+    {
+        backgroundMusicNormal();
+        this.ringLoss = false;
+        this.spindash = false;
+        this.right = false;
+
+        //  Move to the left
+        speed('runLeft');
+        player.animations.play('left');
+    }
+
+    /*******************
+    **Down Key Pressed**
+    *******************/
+
+    if(cursors.down.isDown == true && player.body.touching.down && hitPlatform)
+    {
+        backgroundMusicNormal();
+        if(player.body.velocity.x > 0)
+    {
+        player.body.velocity.x -=0.01;
+        this.spindash = true;
+        player.animations.play('jump');
+        this.right = false;
+        this.ringLoss = false;
+    }
+        if(player.body.velocity.x < 0)
+    {
+        player.body.velocity.x += 0.01;
+        this.spindash = true;
+        this.right = true;
+        player.animations.play('jump');
+        this.ringLoss = false;
+    }
+        else if(player.body.velocity.x == 0)
+        {
+            this.ringLoss = false;
+            this.spindash = false;
+
+             if(this.right ==false)
+            {
+                player.frame = 1;
+            }
+
+            if(this.right ==true)
+            {
+                player.frame = 0;
+            }
+         }
+    }
+
+
+
+    /*********************
+    ****Up Key Pressed****
+    *********************/
+
+    if ((cursors.up.isDown || spaceKey == true) && player.body.touching.down && hitPlatform)
+    {
+        backgroundMusicNormal();
+        game.sound.play('jumpSound');
+        this.ringLoss = false;
+        this.spindash = true;
+        console.log('UP');
+        player.animations.play('jump');
+        speed('jump');
+    }
+
+    else if(cursors.right.isDown && player.body.touching.down == false && cursors.down.isDown == false)
+    {
+        backgroundMusicNormal();
+        this.ringLoss = false;
+        this.spindash = true;
+        this.right = true;
+        player.animations.play('jump'); 
+        speed('jumpRight');
+    }
+
+    else if(cursors.left.isDown && player.body.touching.down == false && cursors.down.isDown == false)
+    {
+        backgroundMusicNormal();
+        this.ringLoss = false;
+        this.spindash = true;
+        this.right = false;
+        player.animations.play('jump'); 
+        speed('jumpLeft');
+    }
+
+   //If player overlaps goal sign, it adds timer score to your score
+    if(overlap(player, trueGoalSign)) 
+        {
+            goalSign = true;
+            trueGoalSign.y = -4000;
+            score += timerScore;
+            localStorage.setItem("timerScore", timerScore);
+            localStorage.setItem("chaosScore", chaosScore);
+            localStorage.setItem("ringScore", trueRingScore);
+            localStorage.setItem('totalScore', score);
+            window.location.href = 'winScreen.html';
+        }
+        
+    game.camera.x = player.body.x - 300;//Camera follows the player starting from the middle of the screen
+    game.camera.y = player.body.y - 300;//Camera follows the player starting from the middle of the screen
+
+    scoreText.x = player.body.x - 280;//scoreText's x coordinate is equaled to the players x coordinate - 280
+    scoreText.y = player.body.y - 230;//scoreText's y coordinate is equaled to the players y coordinate - 230
+
+    ringText.x = player.body.x - 280;//ringText's x coordinate is equaled to the players x coordinate - 280    
+    ringText.y = player.body.y - 180;//ringText's y coordinate is equaled to the players y coordinate - 180
+
+    livesText.x = player.body.x - 280;//livesText's x coordinate is equaled to the players x coordinate - 280
+    livesText.y = player.body.y - 280;//livesText's y coordinate is equaled to the players y coordinate - 180
+    
+    timer.x = player.body.x - 280;//timer x coordinate is equaled to the players x coordinate - 280
+    timer.y = player.body.y - 130;//ringText's y coordinate is equaled to the players y coordinate - 130
+
+    life1.x = player.body.x - 170;//life1 x coordinate is equaled to the players x coordinate - 170
+    life1.y = player.body.y - 280;//life1 y coordinate is equaled to the players y coordinate - 280
+
+    life2.x = player.body.x - 120;//life2 x coordinate is equaled to the players x coordinate - 120
+    life2.y = player.body.y - 280;//life2 y coordinate is equaled to the players y coordinate - 280
+
+    life3.x = player.body.x - 70;//life3 x coordinate is equaled to the players x coordinate - 70
+    life3.y = player.body.y - 280;//life3 y coordinate is equaled to the players y coordinate - 280
+
+    redChaosEmeraldGUI.x = player.body.x - 280;//redChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 280
+    redChaosEmeraldGUI.y = player.body.y - 340;//redChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    blueChaosEmeraldGUI.x = player.body.x - 250;//blueChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 250
+    blueChaosEmeraldGUI.y = player.body.y - 336;//blueChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 336
+
+    yellowChaosEmeraldGUI.x = player.body.x - 220;//yellowChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 220
+    yellowChaosEmeraldGUI.y = player.body.y - 340;//yellowChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    greenChaosEmeraldGUI.x = player.body.x - 190;//greenChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 190
+    greenChaosEmeraldGUI.y = player.body.y - 340;//greenChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    silverChaosEmeraldGUI.x = player.body.x - 160;//silverChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 160
+    silverChaosEmeraldGUI.y = player.body.y - 340;//silverChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    turquoiseChaosEmeraldGUI.x = player.body.x - 130;//turquoiseChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 130
+    turquoiseChaosEmeraldGUI.y = player.body.y - 340;//turquoiseChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    pinkChaosEmeraldGUI.x = player.body.x - 100;//pinkChaosEmeraldGUI x coordinate is equaled to the players x coordinate - 100
+    pinkChaosEmeraldGUI.y = player.body.y - 340;//pinkChaosEmeraldGUI y coordinate is equaled to the players y coordinate - 340
+
+    emeraldCount.x = player.body.x - 280;//emeraldCount x coordinate is equaled to the players x coordinate - 280
+    emeraldCount.y = player.body.y - 380;//emeraldCount y coordinate is equaled to the players y coordinate - 380
+}
+</script>
